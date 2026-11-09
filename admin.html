@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ระบบผู้ดูแลระบบ (Admin) - คณะครุศาสตร์อุตสาหกรรม</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body class="bg-slate-100 min-h-screen flex flex-col">
+
+  <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2"></div>
+
+<!-- Navbar -->
+<header class="bg-white text-slate-800 shadow-md sticky top-0 z-40 border-b border-slate-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+    
+    <!-- โซนโลโก้และชื่อระบบ -->
+    <div class="flex items-center gap-4">
+      <div class="flex items-center">
+        <img src="./images/logo-teed.png" alt="Logo TEED" class="h-12 w-auto object-contain" />
+      </div>
+      <div class="hidden md:block border-l border-slate-300 pl-4">
+        <h1 class="font-bold text-sm tracking-wide leading-tight text-slate-900">ระบบจองคิวบุคลากร</h1>
+        <p class="text-xs text-pink-700 font-medium">คณะครุศาสตร์อุตสาหกรรม</p>
+      </div>
+    </div>
+
+    <!-- โซนข้อมูลผู้ใช้และปุ่มออกจากระบบ -->
+    <div class="flex items-center gap-4">
+        <div class="text-right hidden sm:block">
+            <p id="adminNameDisplay" class="text-sm font-semibold text-slate-800">กำลังโหลด...</p>
+            <p class="text-xs text-slate-500">ผู้ดูแลระบบ (Admin)</p>
+        </div>
+        
+        <!-- ต้องใส่ id="logoutBtn" ให้ตรงกับใน JS ครับ -->
+        <button id="logoutBtn" class="bg-slate-100 hover:bg-red-600 text-slate-700 hover:text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center gap-2 shadow-sm border border-slate-200">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span class="hidden sm:inline">ออกจากระบบ</span>
+        </button>
+    </div>
+
+  </div>
+</header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-8">
+    
+    <!-- เมนูแท็บ -->
+    <div class="flex flex-wrap gap-2 bg-white p-2 rounded-2xl shadow-sm border border-slate-200">
+      <button data-tab="dashboard" class="tab-btn flex-1 min-w-[140px] py-3 px-4 rounded-xl text-sm font-semibold transition-all bg-pink-700 text-white shadow">
+        <i class="fa-solid fa-chart-pie mr-2"></i> แดชบอร์ด & คำขอ
+      </button>
+      <button data-tab="staff" class="tab-btn flex-1 min-w-[140px] py-3 px-4 rounded-xl text-sm font-semibold transition-all text-slate-600 hover:bg-slate-100">
+        <i class="fa-solid fa-user-tie mr-2"></i> จัดการบุคลากร (Staff)
+      </button>
+      <button data-tab="positions" class="tab-btn flex-1 min-w-[140px] py-3 px-4 rounded-xl text-sm font-semibold transition-all text-slate-600 hover:bg-slate-100">
+        <i class="fa-solid fa-briefcase mr-2"></i> ตำแหน่งงาน
+      </button>
+      <button data-tab="users" class="tab-btn flex-1 min-w-[140px] py-3 px-4 rounded-xl text-sm font-semibold transition-all text-slate-600 hover:bg-slate-100">
+        <i class="fa-solid fa-users mr-2"></i> ผู้ใช้งาน & รหัสผ่าน
+      </button>
+      <button data-tab="settings" class="tab-btn flex-1 min-w-[140px] py-3 px-4 rounded-xl text-sm font-semibold transition-all text-slate-600 hover:bg-slate-100">
+        <i class="fa-solid fa-gear mr-2"></i> ตั้งค่าระบบ & รหัสแอดมิน
+      </button>
+    </div>
+
+    <!-- TAB 1: แดชบอร์ด -->
+    <section id="tabContent-dashboard" class="space-y-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase">คิวทั้งหมด</p>
+            <h3 id="statTotal" class="text-3xl font-bold text-slate-800 mt-1">0</h3>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl"><i class="fa-solid fa-calendar-days"></i></div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-amber-600 uppercase">รอรับงาน</p>
+            <h3 id="statPending" class="text-3xl font-bold text-amber-600 mt-1">0</h3>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl"><i class="fa-solid fa-clock"></i></div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-emerald-600 uppercase">อนุมัติแล้ว</p>
+            <h3 id="statApproved" class="text-3xl font-bold text-emerald-600 mt-1">0</h3>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl"><i class="fa-solid fa-circle-check"></i></div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-purple-600 uppercase">เสร็จสิ้น</p>
+            <h3 id="statCompleted" class="text-3xl font-bold text-purple-600 mt-1">0</h3>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl"><i class="fa-solid fa-flag-checkered"></i></div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-6 border-b border-slate-200 flex items-center justify-between">
+          <h2 class="text-lg font-bold text-slate-800">รายการคำขอจองคิวทั้งหมดในคณะ</h2>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs uppercase tracking-wider">
+                <th class="p-4">รหัส / วันที่จอง</th>
+                <th class="p-4">ผู้ขอจอง / หน่วยงาน</th>
+                <th class="p-4">ตำแหน่งที่ขอ</th>
+                <th class="p-4">บุคลากรผู้รับผิดชอบ</th>
+                <th class="p-4">ชื่องาน / รายละเอียด</th>
+                <th class="p-4">สถานะ</th>
+              </tr>
+            </thead>
+            <tbody id="allBookingsTableBody" class="divide-y divide-slate-100 text-slate-700">
+              <tr><td colspan="6" class="p-8 text-center text-slate-400">กำลังโหลด...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: จัดการบุคลากร -->
+    <section id="tabContent-staff" class="space-y-6 hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit">
+          <h2 class="text-base font-bold text-slate-800 mb-1"><i class="fa-solid fa-user-plus text-pink-700 mr-2"></i> เพิ่มบัญชีบุคลากรใหม่</h2>
+          <form id="createStaffForm" class="space-y-3.5 mt-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">ชื่อ-นามสกุล *</label>
+              <input type="text" id="staffFullName" required placeholder="เช่น นายวิชาญ ช่างภาพ" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-pink-600" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">ตำแหน่งงาน *</label>
+              <select id="staffPositionSelect" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm bg-white focus:ring-2 focus:ring-pink-600">
+                <option value="">-- เลือกตำแหน่งงาน --</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">เบอร์โทรศัพท์ *</label>
+              <input type="tel" id="staffPhone" maxlength="10" required placeholder="0891234567" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-pink-600" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">อีเมล</label>
+              <input type="email" id="staffEmail" placeholder="staff@rmutt.ac.th" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-pink-600" />
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Username *</label>
+                <input type="text" id="staffUsername" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-pink-600" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Password *</label>
+                <input type="text" id="staffPassword" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-pink-600" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Telegram Chat ID</label>
+              <button onclick="openTelegramGuideModal()" type="button" class="text-slate-700 hover:text-black transition-colors text-xs flex items-center gap-1 py-1 rounded-full">
+                <i class="fa-solid fa-circle-question"></i> วิธีดู Chat ID
+              </button>
+              <input type="text" id="staffTelegramId" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-pink-600" />
+            </div>
+            <button type="submit" class="w-full py-2.5 px-4 bg-pink-700 hover:bg-pink-800 text-white font-semibold rounded-xl shadow text-sm">บันทึกเพิ่มบุคลากร</button>
+          </form>
+        </div>
+        <div class="lg:col-span-8 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="p-6 border-b border-slate-200"><h2 class="text-base font-bold text-slate-800">รายชื่อบุคลากรทั้งหมด</h2></div>
+          <div class="p-2 relative w-full sm:w-72">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </span>
+            <input type="text" id="searchStaffInput" placeholder="ค้นหาด้วยชื่อ หรือตำแหน่ง..." class="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-600 focus:bg-white transition-all" />
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs uppercase">
+                  <th class="p-4">ชื่อ-นามสกุล</th><th class="p-4">ตำแหน่ง</th><th class="p-4">Username / Password</th><th class="p-4">Telegram ID</th><th class="p-4 text-center">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="staffTableBody" class="divide-y divide-slate-100 text-slate-700">
+                <tr><td colspan="5" class="p-6 text-center text-slate-400">กำลังโหลด...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: ตำแหน่งงาน -->
+    <section id="tabContent-positions" class="space-y-6 hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit">
+          <h2 class="text-base font-bold text-slate-800 mb-1"><i class="fa-solid fa-briefcase text-pink-700 mr-2"></i> เพิ่มตำแหน่งงาน</h2>
+          <form id="createPositionForm" class="space-y-4 mt-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">ชื่อตำแหน่งงาน *</label>
+              <input type="text" id="posName" required placeholder="เช่น ช่างภาพ, โสตฯ" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-pink-600" />
+            </div>
+            <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+              <label class="flex items-start gap-2.5 cursor-pointer">
+                <input type="checkbox" id="posRequireTime" class="mt-1 w-4 h-4 text-pink-600 rounded" checked />
+                <span class="text-xs text-slate-700"><strong>บังคับระบุเวลาเริ่ม - สิ้นสุด</strong><br/>ติ๊กถูกหากต้องการเช็คคิวชนตามเวลา</span>
+              </label>
+            </div>
+            <button type="submit" class="w-full py-2.5 px-4 bg-pink-700 hover:bg-pink-800 text-white font-semibold rounded-xl shadow text-sm">เพิ่มตำแหน่งงาน</button>
+          </form>
+        </div>
+        <div class="lg:col-span-8 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="p-6 border-b border-slate-200"><h2 class="text-base font-bold text-slate-800">ประเภทตำแหน่งงานทั้งหมด</h2></div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs uppercase"><th class="p-4">ชื่อตำแหน่งงาน</th><th class="p-4">เงื่อนไขเวลา</th><th class="p-4 text-center">ลบ</th></tr>
+              </thead>
+              <tbody id="positionsTableBody" class="divide-y divide-slate-100 text-slate-700">
+                <tr><td colspan="3" class="p-6 text-center text-slate-400">กำลังโหลด...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: ผู้ใช้งาน -->
+    <section id="tabContent-users" class="space-y-6 hidden">
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-6 border-b border-slate-200"><h2 class="text-base font-bold text-slate-800">จัดการผู้ใช้งานทั่วไป</h2></div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs uppercase">
+                <th class="p-4">ชื่อ-นามสกุล / สาขาวิชา</th><th class="p-4">เบอร์โทรศัพท์</th><th class="p-4">Username / Password</th><th class="p-4">Telegram ID</th><th class="p-4 text-center">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody" class="divide-y divide-slate-100 text-slate-700">
+              <tr><td colspan="5" class="p-6 text-center text-slate-400">กำลังโหลด...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: ตั้งค่าระบบ -->
+    <section id="tabContent-settings" class="space-y-6 hidden">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+          <h2 class="text-base font-bold text-slate-800 mb-1"><i class="fa-brands fa-telegram text-sky-500 mr-2"></i> ตั้งค่า Telegram Bot Token</h2>
+            <button onclick="openTelegramGuideModalToken()" type="button" class="text-slate-700 hover:text-black transition-colors text-xs flex items-center gap-3 py-1 rounded-full">
+              <i class="fa-solid fa-circle-question"></i> วิธีหา Telegram Bot Token
+            </button>
+          <form id="botTokenForm" class="space-y-4 mt-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Bot Token *</label>
+              <input type="text" id="botTokenInput" placeholder="123456789:ABC..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-mono focus:ring-2 focus:ring-pink-600" />
+            </div>
+            <button type="submit" class="py-2.5 px-4 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-xl shadow text-sm">บันทึก Token</button>
+          </form>
+        </div>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+          <h2 class="text-base font-bold text-slate-800 mb-1"><i class="fa-solid fa-key text-pink-700 mr-2"></i> เปลี่ยนรหัสผ่าน Admin</h2>
+          <form id="adminPasswordForm" class="space-y-4">
+              <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1">Username</label>
+                  <input type="text" id="adminUsernameInput" disabled class="w-full px-3 py-2 text-sm bg-slate-100 border border-slate-300 rounded-lg text-slate-500" />
+              </div>
+              
+              <!-- ช่องรหัสผ่านเก่า -->
+              <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1">รหัสผ่านเก่า *</label>
+                  <div class="relative">
+                      <input type="password" id="adminOldPassword" required placeholder="กรอกรหัสผ่านเดิม" 
+                            class="w-full px-3 py-2 pr-10 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:outline-none [&::-ms-reveal]:hidden [&::-ms-clear]:hidden" />
+                      <!-- ปุ่มรูปตาเปิด/ปิด สำหรับรหัสผ่านเก่า -->
+                      <button type="button" onclick="togglePassword('adminOldPassword', 'eyeIconOld')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none">
+                          <i id="eyeIconOld" class="fa-solid fa-eye-slash"></i>
+                      </button>
+                  </div>
+              </div>
+
+              <!-- ช่องรหัสผ่านใหม่ -->
+              <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1">รหัสผ่านใหม่ *</label>
+                  <div class="relative">
+                      <input type="password" id="adminNewPassword" required autocomplete="new-password" placeholder="อย่างน้อย 4 ตัวอักษร" 
+                            class="w-full px-3 py-2 pr-10 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:outline-none [&::-ms-reveal]:hidden [&::-ms-clear]:hidden" />
+                      <!-- ปุ่มรูปตาเปิด/ปิด -->
+                      <button type="button" onclick="togglePassword('adminNewPassword', 'eyeIcon1')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none">
+                          <i id="eyeIcon1" class="fa-solid fa-eye-slash"></i>
+                      </button>
+                  </div>
+              </div>
+
+              <!-- ช่องยืนยันรหัสผ่านใหม่ -->
+              <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1">ยืนยันรหัสผ่านใหม่ *</label>
+                  <div class="relative">
+                      <input type="password" id="adminConfirmPassword" required autocomplete="new-password" placeholder="กรอกรหัสผ่านใหม่อีกครั้ง" 
+                            class="w-full px-3 py-2 pr-10 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:outline-none [&::-ms-reveal]:hidden [&::-ms-clear]:hidden" />
+                      <!-- ปุ่มรูปตาเปิด/ปิด -->
+                      <button type="button" onclick="togglePassword('adminConfirmPassword', 'eyeIcon2')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none">
+                          <i id="eyeIcon2" class="fa-solid fa-eye-slash"></i>
+                      </button>
+                  </div>
+              </div>
+
+              <button type="submit" class="w-full bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 text-sm font-semibold rounded-lg shadow-sm transition-colors">
+                  เปลี่ยนรหัสผ่าน
+              </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Modal แสดงคู่มือ Telegram สำหรับเจ้าหน้าที่ -->
+  <div id="telegramGuideModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl border border-slate-100">
+      <div class="flex items-center justify-between mb-4 border-b pb-3">
+        <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+          <i class="fa-solid fa-circle-exclamation text-amber-500"></i> คู่มือการใช้งาน Telegram Bot
+        </h3>
+        <button onclick="closeTelegramGuideModal()" class="text-slate-400 hover:text-slate-600 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-xs text-slate-600">
+        <!-- 1. วิธีหา Chat ID -->
+        <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl">
+          <div class="font-bold text-amber-800 mb-1">1. วิธีการหา Telegram Chat ID ของคุณ</div>
+          <p>1. ค้นหาบอท <span class="font-semibold text-slate-700">@userinfobot</span> ใน Telegram</p>
+          <p>2. กดปุ่ม Start เพื่อเริ่มใช้งาน</p>
+          <p>3. นำตัวเลข ID ที่บอทรายงานกลับมาใส่ในช่องกรอกแล้วกดบันทึก</p>
+        </div>
+
+        <!-- 2. การกด Start บอทรับแจ้งเตือน -->
+        <div class="p-3 bg-rose-50 border border-rose-200 rounded-xl">
+          <div class="font-bold text-rose-800 mb-1">2. เพื่อการรับแจ้งเตือนคิวงานเข้ามาใหม่</div>
+          <p>1. ค้นหาแชท <span class="font-semibold text-slate-700">BookingRmuttTechEducation_bot</span> ใน Telegram</p>
+          <p>2. กดปุ่ม Start เพื่อเปิดสิทธิ์ให้บอทส่งแจ้งเตือนเมื่อมีคำขอจองคิวส่งถึงคุณได้</p>
+        </div>
+      </div>
+
+      <div class="mt-6 text-right">
+        <button onclick="closeTelegramGuideModal()" class="px-4 py-2 bg-slate-800 text-white rounded-xl text-xs hover:bg-slate-700 transition-colors">
+          เข้าใจแล้ว
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+    <!-- Modal แสดงคู่มือ Telegram Token สำหรับเจ้าหน้าที่ -->
+  <div id="telegramGuideModalToken" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl border border-slate-100">
+      <div class="flex items-center justify-between mb-4 border-b pb-3">
+        <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+          <i class="fa-solid fa-circle-exclamation text-amber-500"></i> ขั้นตอนการขอ Telegram Bot Token
+        </h3>
+        <button onclick="closeTelegramGuideModalToken()" class="text-slate-400 hover:text-slate-600 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-xs text-slate-600">
+        <!-- 1. วิธีหา Token bot -->
+        <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl">
+          <p>1. เปิดแอปพลิเคชัน Telegram (ใช้ได้ทั้งในมือถือหรือคอมพิวเตอร์)</p>
+          <p>2. ค้นหาคำว่า @BotFather ในช่องค้นหา และกดเข้าไปที่แชทของบอทตัวนี้ (สังเกตเครื่องหมายติ๊กถูกสีฟ้าว่าใช่บอททางการหรือไม่)</p>
+          <p>3. กดปุ่ม Start หรือพิมพ์คำสั่ง /start</p>
+          <p>4. พิมพ์คำสั่ง /newbot แล้วกดส่ง</p>
+          <p>5. ตั้งชื่อแสดง (Bot Name) ของบอทตามที่ระบบถาม เช่น MyBot</p>
+          <p>6. ตั้งชื่อ Username (Bot Username) ซึ่งต้องลงท้ายด้วยคำว่า bot ด้วยเสมอ (ตัวอย่าง: my_bot_123_bot)</p>
+          <p>7. หากตั้งชื่อสำเร็จ @BotFather จะส่งข้อความตอบกลับมา ซึ่งในข้อความนั้นจะมี HTTP API Token (ลักษณะเป็นชุดตัวเลขและตัวอักษรต่อกัน) ให้คัดลอกเก็บไว้ใช้งาน</p>
+        </div>
+
+        <div class="p-3 bg-rose-50 border border-rose-200 rounded-xl">
+          <div class="font-bold text-rose-800 mb-1">ข้อควรระวัง!!! ห้ามเผยแพร่ Bot Token นี้ในที่สาธารณะ เพราะผู้อื่นอาจนำ Token ไปใช้ควบคุมบอทหรือส่งข้อความสวมรอยได้ หากทำหลุด สามารถพิมพ์คำสั่ง /revoke ในแชทกับ @BotFather เพื่อยกเลิก Token เก่าและสร้างใหม่ได้ทันที</div>
+        </div>
+      </div>
+
+      <div class="mt-6 text-right">
+        <button onclick="closeTelegramGuideModalToken()" class="px-4 py-2 bg-slate-800 text-white rounded-xl text-xs hover:bg-slate-700 transition-colors">
+          เข้าใจแล้ว
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./js/pages/admin-page.js"></script>
+  
+</body>
+</html>
